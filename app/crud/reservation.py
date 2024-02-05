@@ -16,7 +16,7 @@ class CRUDReservation(CRUDBase):
             to_reserve: datetime,
             meetingroom_id: int,
             reservation_id: Optional[int] = None,
-            session: AsyncSession,
+            session: AsyncSession
     ) -> list[Reservation]:
         # Выносим уже существующий запрос в отдельное выражение.
         select_stmt = select(Reservation).where(
@@ -37,6 +37,14 @@ class CRUDReservation(CRUDBase):
         reservations = await session.execute(select_stmt)
         reservations = reservations.scalars().all()
         return reservations
+
+    async def get_future_reservations_for_room(self, room_id: int, session: AsyncSession) -> list[Reservation]:
+        select_stmt = select(Reservation).where(
+            Reservation.meetingroom_id == room_id,
+            Reservation.to_reserve > datetime.now()
+        )
+        reservations = await session.execute(select_stmt)
+        return reservations.scalars().all()
 
 
 reservation_crud = CRUDReservation(Reservation)
